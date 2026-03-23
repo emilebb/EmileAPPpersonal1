@@ -132,62 +132,92 @@ export default function DashboardScreen() {
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <Text style={styles.sectionTitle}>Acciones Rapidas</Text>
           <View style={styles.actionsRow}>
-            <TouchableOpacity style={styles.actionCard} activeOpacity={0.7}>
+            <TouchableOpacity style={styles.actionCard} activeOpacity={0.7} onPress={() => router.push('/new-sale')}>
               <View style={[styles.actionIconBox, { backgroundColor: 'rgba(56, 189, 248, 0.1)' }]}>
                 <Ionicons name="add-circle" size={28} color="#38bdf8" />
               </View>
-              <Text style={styles.actionLabel}>New Sale</Text>
+              <Text style={styles.actionLabel}>Nueva Venta</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionCard} activeOpacity={0.7}>
+            <TouchableOpacity style={styles.actionCard} activeOpacity={0.7} onPress={() => router.push('/inventory')}>
               <View style={[styles.actionIconBox, { backgroundColor: 'rgba(74, 222, 128, 0.1)' }]}>
                 <Ionicons name="cube" size={28} color="#4ade80" />
               </View>
-              <Text style={styles.actionLabel}>Inventory</Text>
+              <Text style={styles.actionLabel}>Inventario</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionCard} activeOpacity={0.7}>
+            <TouchableOpacity style={styles.actionCard} activeOpacity={0.7} onPress={() => router.push('/sales-list')}>
               <View style={[styles.actionIconBox, { backgroundColor: 'rgba(251, 191, 36, 0.1)' }]}>
-                <Ionicons name="barcode" size={28} color="#fbbf24" />
+                <Ionicons name="receipt" size={28} color="#fbbf24" />
               </View>
-              <Text style={styles.actionLabel}>Scanner</Text>
+              <Text style={styles.actionLabel}>Ventas</Text>
             </TouchableOpacity>
           </View>
+        </View>
+
+        {/* Onboarding Guide */}
+        <View style={styles.onboardingSection}>
+          <Text style={styles.sectionTitle}>Empieza Aqui</Text>
+          <TouchableOpacity style={styles.onboardingCard} activeOpacity={0.7} onPress={() => router.push('/inventory')}>
+            <View style={styles.onboardingLeft}>
+              <View style={[styles.onboardingIcon, { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}>
+                <Ionicons name="cube" size={24} color="#38bdf8" />
+              </View>
+              <View style={styles.onboardingText}>
+                <Text style={styles.onboardingTitle}>Agrega tu primer producto</Text>
+                <Text style={styles.onboardingSubtitle}>Construye tu inventario en segundos</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#38bdf8" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.onboardingCard} activeOpacity={0.7} onPress={() => router.push('/new-sale')}>
+            <View style={styles.onboardingLeft}>
+              <View style={[styles.onboardingIcon, { backgroundColor: 'rgba(74, 222, 128, 0.15)' }]}>
+                <Ionicons name="cash" size={24} color="#4ade80" />
+              </View>
+              <View style={styles.onboardingText}>
+                <Text style={styles.onboardingTitle}>Registra tu primera venta</Text>
+                <Text style={styles.onboardingSubtitle}>Cobra de forma rapida y sencilla</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#4ade80" />
+          </TouchableOpacity>
         </View>
 
         {/* Recent Activity */}
         <View style={styles.activitySection}>
           <View style={styles.activityHeader}>
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
-            <TouchableOpacity onPress={handleUpgrade} activeOpacity={0.7}>
-              <Text style={styles.seeAllText}>SEE ALL</Text>
+            <Text style={styles.sectionTitle}>Actividad Reciente</Text>
+            <TouchableOpacity onPress={() => router.push('/sales-list')} activeOpacity={0.7}>
+              <Text style={styles.seeAllText}>VER TODAS</Text>
             </TouchableOpacity>
           </View>
 
           <ActivityItem 
             icon="bag-handle" 
-            title="Product Sales" 
-            subtitle="Today, 2:45 PM" 
+            title="Ventas de Producto" 
+            subtitle="Hoy, 2:45 PM" 
             amount="+$2,450.00" 
-            status="COMPLETED" 
+            status="COMPLETADO" 
             statusColor="#4ade80"
             iconBg="rgba(74, 222, 128, 0.1)"
           />
           <ActivityItem 
             icon="wallet" 
-            title="Vault Payout" 
-            subtitle="Yesterday, 10:12 AM" 
+            title="Pago Vault" 
+            subtitle="Ayer, 10:12 AM" 
             amount="-$1,200.00" 
-            status="PROCESSING" 
+            status="PROCESANDO" 
             statusColor="#a29bfe"
             iconBg="rgba(162, 155, 254, 0.1)"
           />
           <ActivityItem 
             icon="star" 
-            title="Partner Commission" 
+            title="Comision Partner" 
             subtitle="24 Oct, 2023" 
             amount="+$842.10" 
-            status="COMPLETED" 
+            status="COMPLETADO" 
             statusColor="#4ade80"
             iconBg="rgba(74, 222, 128, 0.1)"
           />
@@ -479,6 +509,50 @@ const styles = StyleSheet.create({
     color: '#f8fafc',
     fontSize: 12,
     fontWeight: '600',
+  },
+  onboardingSection: {
+    marginBottom: 28,
+  },
+  onboardingCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+  },
+  onboardingLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  onboardingIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  onboardingText: {
+    flex: 1,
+  },
+  onboardingTitle: {
+    color: '#f8fafc',
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  onboardingSubtitle: {
+    color: '#64748b',
+    fontSize: 12,
   },
   activitySection: {
     marginBottom: 20,

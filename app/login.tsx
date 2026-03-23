@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, AppState, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, View, Text, AppState, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -14,6 +14,12 @@ AppState.addEventListener('change', (state) => {
     supabase.auth.stopAutoRefresh();
   }
 });
+
+const features = [
+  { icon: 'cube', label: 'Gestiona inventario' },
+  { icon: 'receipt', label: 'Registra ventas' },
+  { icon: 'cloud', label: 'Sincronizacion' },
+];
 
 export default function LoginScreen() {
   const [isLoginView, setIsLoginView] = useState(true);
@@ -55,134 +61,159 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardView}>
-        <View style={styles.backgroundOrb1} />
-        <View style={styles.backgroundOrb2} />
-        
-        <View style={styles.content}>
-          <View style={styles.logoContainer}>
-            <View style={styles.logoCircle}>
-              <Image 
-                source={require('@/assets/images/logo.png')} 
-                style={styles.logoImage}
-                contentFit="contain"
-              />
-            </View>
-            <Text style={styles.logoText}>VAULT</Text>
-          </View>
-
-          <View style={styles.card}>
-            <View style={styles.header}>
-              <View style={styles.iconBadge}>
-                <Ionicons name={isLoginView ? "lock-closed" : "person-add"} size={24} color="#38bdf8" />
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.backgroundOrb1} />
+          <View style={styles.backgroundOrb2} />
+          
+          <View style={styles.content}>
+            {/* Hero Section */}
+            <View style={styles.heroSection}>
+              <View style={styles.logoContainer}>
+                <View style={styles.logoCircle}>
+                  <Image 
+                    source={require('@/assets/images/logo.png')} 
+                    style={styles.logoImage}
+                    contentFit="contain"
+                  />
+                </View>
               </View>
-              <Text style={styles.title}>{isLoginView ? 'Welcome Back' : 'Create Account'}</Text>
-              <Text style={styles.subtitle}>
-                {isLoginView 
-                  ? 'Sign in to access your vault' 
-                  : 'Start managing your inventory today'}
+              
+              <Text style={styles.heroTitle}>VAULT</Text>
+              <Text style={styles.heroSubtitle}>
+                Sistema de inventario y ventas{'\n'}en la palma de tu mano
               </Text>
+              
+              {/* Feature Pills */}
+              <View style={styles.featurePills}>
+                {features.map((feature, index) => (
+                  <View key={index} style={styles.featurePill}>
+                    <Ionicons name={feature.icon as any} size={14} color="#38bdf8" />
+                    <Text style={styles.featurePillText}>{feature.label}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
 
-            <View style={styles.formGroup}>
-              <View style={[
-                styles.inputContainer, 
-                focusedInput === 'email' && styles.inputContainerFocused
-              ]}>
-                <View style={styles.inputIconWrapper}>
-                  <Ionicons name="mail" size={20} color={focusedInput === 'email' ? '#38bdf8' : '#64748b'} />
-                </View>
-                <TextInput
-                  style={styles.input}
-                  onChangeText={setEmail}
-                  value={email}
-                  placeholder="Email address"
-                  placeholderTextColor="#64748b"
-                  autoCapitalize={'none'}
-                  keyboardType="email-address"
-                  onFocus={() => setFocusedInput('email')}
-                  onBlur={() => setFocusedInput(null)}
-                />
-              </View>
+            {/* Auth Card */}
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>
+                {isLoginView ? 'Inicia sesion' : 'Crea tu cuenta'}
+              </Text>
+              <Text style={styles.cardSubtitle}>
+                {isLoginView 
+                  ? 'Accede a tu panel' 
+                  : 'Empieza gratis en segundos'}
+              </Text>
 
-              <View style={[
-                styles.inputContainer, 
-                focusedInput === 'password' && styles.inputContainerFocused
-              ]}>
-                <View style={styles.inputIconWrapper}>
-                  <Ionicons name="key" size={20} color={focusedInput === 'password' ? '#38bdf8' : '#64748b'} />
-                </View>
-                <TextInput
-                  style={styles.input}
-                  onChangeText={setPassword}
-                  value={password}
-                  secureTextEntry={true}
-                  placeholder="Password"
-                  placeholderTextColor="#64748b"
-                  autoCapitalize={'none'}
-                  onFocus={() => setFocusedInput('password')}
-                  onBlur={() => setFocusedInput(null)}
-                />
-              </View>
-
-              {!isLoginView && (
+              <View style={styles.formGroup}>
                 <View style={[
                   styles.inputContainer, 
-                  focusedInput === 'confirm' && styles.inputContainerFocused
+                  focusedInput === 'email' && styles.inputContainerFocused
                 ]}>
                   <View style={styles.inputIconWrapper}>
-                    <Ionicons name="key-outline" size={20} color={focusedInput === 'confirm' ? '#38bdf8' : '#64748b'} />
+                    <Ionicons name="mail" size={20} color={focusedInput === 'email' ? '#38bdf8' : '#64748b'} />
                   </View>
                   <TextInput
                     style={styles.input}
-                    onChangeText={setConfirmPassword}
-                    value={confirmPassword}
-                    secureTextEntry={true}
-                    placeholder="Confirm Password"
+                    onChangeText={setEmail}
+                    value={email}
+                    placeholder="Email"
                     placeholderTextColor="#64748b"
                     autoCapitalize={'none'}
-                    onFocus={() => setFocusedInput('confirm')}
+                    keyboardType="email-address"
+                    onFocus={() => setFocusedInput('email')}
                     onBlur={() => setFocusedInput(null)}
                   />
                 </View>
-              )}
 
-              <TouchableOpacity 
-                style={[styles.primaryBtn, loading && styles.primaryBtnDisabled]} 
-                disabled={loading} 
-                onPress={handleAuth}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.primaryBtnText}>
-                  {loading ? 'Loading...' : (isLoginView ? 'Sign In' : 'Create Account')}
-                </Text>
-                {!loading && <Ionicons name="arrow-forward" size={20} color="#0f172a" style={styles.btnIcon} />}
-              </TouchableOpacity>
+                <View style={[
+                  styles.inputContainer, 
+                  focusedInput === 'password' && styles.inputContainerFocused
+                ]}>
+                  <View style={styles.inputIconWrapper}>
+                    <Ionicons name="key" size={20} color={focusedInput === 'password' ? '#38bdf8' : '#64748b'} />
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    onChangeText={setPassword}
+                    value={password}
+                    secureTextEntry={true}
+                    placeholder="Contraseña"
+                    placeholderTextColor="#64748b"
+                    autoCapitalize={'none'}
+                    onFocus={() => setFocusedInput('password')}
+                    onBlur={() => setFocusedInput(null)}
+                  />
+                </View>
+
+                {!isLoginView && (
+                  <View style={[
+                    styles.inputContainer, 
+                    focusedInput === 'confirm' && styles.inputContainerFocused
+                  ]}>
+                    <View style={styles.inputIconWrapper}>
+                      <Ionicons name="key-outline" size={20} color={focusedInput === 'confirm' ? '#38bdf8' : '#64748b'} />
+                    </View>
+                    <TextInput
+                      style={styles.input}
+                      onChangeText={setConfirmPassword}
+                      value={confirmPassword}
+                      secureTextEntry={true}
+                      placeholder="Confirmar pass"
+                      placeholderTextColor="#64748b"
+                      autoCapitalize={'none'}
+                      onFocus={() => setFocusedInput('confirm')}
+                      onBlur={() => setFocusedInput(null)}
+                    />
+                  </View>
+                )}
+
+                <TouchableOpacity 
+                  style={[styles.primaryBtn, loading && styles.primaryBtnDisabled]} 
+                  disabled={loading} 
+                  onPress={handleAuth}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.primaryBtnText}>
+                    {loading ? 'Cargando...' : (isLoginView ? 'Entrar' : 'Crear Cuenta Gratis')}
+                  </Text>
+                  {!loading && <Ionicons name="arrow-forward" size={20} color="#09090b" style={styles.btnIcon} />}
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.footer}>
+                <TouchableOpacity 
+                  style={styles.switchBtn} 
+                  onPress={() => setIsLoginView(!isLoginView)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.switchBtnText}>
+                    No tienes cuenta?
+                  </Text>
+                  <Text style={styles.switchBtnLink}>
+                    {isLoginView ? ' Registrate' : ' Inicia sesion'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
-            <View style={styles.footer}>
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or</Text>
-                <View style={styles.dividerLine} />
+            {/* Trust Badges */}
+            <View style={styles.trustBadges}>
+              <View style={styles.trustBadge}>
+                <Ionicons name="shield-checkmark" size={16} color="#4ade80" />
+                <Text style={styles.trustBadgeText}>Datos seguros</Text>
               </View>
-              
-              <TouchableOpacity 
-                style={styles.socialBtn} 
-                onPress={() => setIsLoginView(!isLoginView)}
-                activeOpacity={0.7}
-              >
-                <Ionicons name={isLoginView ? "person-add-outline" : "log-in-outline"} size={20} color="#f8fafc" />
-                <Text style={styles.socialBtnText}>
-                  {isLoginView ? 'Create New Account' : 'Sign In Instead'}
-                </Text>
-              </TouchableOpacity>
+              <View style={styles.trustBadge}>
+                <Ionicons name="cloud-done" size={16} color="#4ade80" />
+                <Text style={styles.trustBadgeText}>Sincronización</Text>
+              </View>
+              <View style={styles.trustBadge}>
+                <Ionicons name="phone-portrait" size={16} color="#4ade80" />
+                <Text style={styles.trustBadgeText}>Multi-dispositivo</Text>
+              </View>
             </View>
           </View>
-
-          <Text style={styles.footerText}>
-            By continuing, you agree to our Terms & Privacy
-          </Text>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -196,104 +227,123 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
   backgroundOrb1: {
     position: 'absolute',
-    top: -200,
+    top: -100,
     right: -100,
-    width: 400,
-    height: 400,
-    borderRadius: 200,
-    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+    width: 350,
+    height: 350,
+    borderRadius: 175,
+    backgroundColor: 'rgba(56, 189, 248, 0.08)',
     blurRadius: 100,
   },
   backgroundOrb2: {
     position: 'absolute',
-    bottom: -150,
+    bottom: -100,
     left: -100,
     width: 300,
     height: 300,
     borderRadius: 150,
-    backgroundColor: 'rgba(74, 222, 128, 0.08)',
+    backgroundColor: 'rgba(74, 222, 128, 0.06)',
     blurRadius: 80,
   },
   content: { 
-    flex: 1, 
-    padding: 24, 
-    justifyContent: 'center',
+    padding: 24,
   },
-  logoContainer: {
+  heroSection: {
     alignItems: 'center',
     marginBottom: 32,
+  },
+  logoContainer: {
+    marginBottom: 20,
   },
   logoCircle: {
     width: 100,
     height: 100,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(56, 189, 248, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: '#38bdf8',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
     overflow: 'hidden',
   },
   logoImage: {
-    width: 80,
-    height: 80,
+    width: 70,
+    height: 70,
   },
-  logoText: {
-    fontSize: 32,
+  heroTitle: {
+    fontSize: 36,
     fontWeight: '900',
     color: '#f8fafc',
-    letterSpacing: 8,
+    letterSpacing: 6,
+    marginBottom: 12,
   },
-  card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
-    padding: 28,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 24 },
-    shadowOpacity: 0.4,
-    shadowRadius: 32,
-    elevation: 16,
+  heroSubtitle: {
+    fontSize: 16,
+    color: '#94a3b8',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 24,
   },
-  header: {
+  featurePills: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  featurePill: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 28,
-  },
-  iconBadge: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
     backgroundColor: 'rgba(56, 189, 248, 0.1)',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(56, 189, 248, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
+    gap: 6,
   },
-  title: { 
-    fontSize: 24, 
-    fontWeight: '800', 
-    color: '#f8fafc', 
+  featurePillText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#38bdf8',
+  },
+  card: {
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    padding: 28,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+  },
+  cardTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#f8fafc',
     marginBottom: 8,
-    letterSpacing: -0.5,
-  },
-  subtitle: { 
-    fontSize: 14, 
-    color: '#64748b', 
     textAlign: 'center',
-    lineHeight: 20,
+  },
+  cardSubtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    textAlign: 'center',
+    marginBottom: 24,
   },
   formGroup: { 
-    marginBottom: 20,
+    marginBottom: 8,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -301,52 +351,46 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 16,
+    borderRadius: 14,
     paddingHorizontal: 16,
-    height: 56,
+    height: 54,
     marginBottom: 14,
-    transition: 'all 0.2s ease',
   },
   inputContainerFocused: {
     borderColor: '#38bdf8',
     backgroundColor: 'rgba(56, 189, 248, 0.05)',
     shadowColor: '#38bdf8',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 4,
   },
   inputIconWrapper: {
-    width: 36,
-    height: 36,
+    width: 34,
+    height: 34,
     borderRadius: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.04)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
-  inputIcon: {
-    marginRight: 0,
-  },
   input: { 
     flex: 1, 
     color: '#f8fafc', 
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '500',
   },
   primaryBtn: {
     backgroundColor: '#38bdf8',
-    borderRadius: 16,
-    paddingVertical: 18,
-    alignItems: 'center',
-    marginTop: 8,
+    borderRadius: 14,
+    paddingVertical: 16,
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 8,
     shadowColor: '#38bdf8',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowRadius: 12,
   },
   primaryBtnDisabled: {
     opacity: 0.6,
@@ -355,47 +399,43 @@ const styles = StyleSheet.create({
     color: '#09090b', 
     fontSize: 16, 
     fontWeight: '700',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   btnIcon: {
     marginLeft: 8,
   },
   footer: { 
-    marginTop: 8,
+    marginTop: 16,
+    alignItems: 'center',
   },
-  divider: {
+  switchBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 20,
+    padding: 8,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+  switchBtnText: {
+    color: '#64748b',
+    fontSize: 14,
   },
-  dividerText: {
-    color: '#475569',
-    fontSize: 12,
-    fontWeight: '600',
-    marginHorizontal: 16,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  socialBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderRadius: 16,
-    paddingVertical: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    gap: 10,
-  },
-  socialBtnText: {
-    color: '#f8fafc',
+  switchBtnLink: {
+    color: '#38bdf8',
     fontSize: 14,
     fontWeight: '600',
+  },
+  trustBadges: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+  },
+  trustBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  trustBadgeText: {
+    fontSize: 11,
+    color: '#64748b',
+    fontWeight: '500',
   },
   footerText: {
     color: '#475569',
