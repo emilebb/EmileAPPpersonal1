@@ -5,6 +5,7 @@ import { LineChart } from 'react-native-chart-kit';
 import { printToFileAsync } from 'expo-print';
 import { shareAsync } from 'expo-sharing';
 import { useRouter } from 'expo-router';
+import { supabase } from '../../lib/supabase';
 
 // removed global width definition
 
@@ -102,7 +103,7 @@ export default function DashboardScreen() {
           <ActionCard icon="wallet-outline" label="Retirar" color="#f472b6" />
           <ActionCard icon="cube-outline" label="Inventario" color="#facc15" onPress={() => router.push('/inventory')} />
           <ActionCard icon="document-text-outline" label="Exportar" color="#a78bfa" onPress={handleExport} />
-          <ActionCard icon="settings-outline" label="Ajustes" color="#94a3b8" />
+          <ActionCard icon="log-out-outline" label="Salir" color="#ef4444" onPress={async () => await supabase.auth.signOut()} />
         </View>
 
         {/* Recent Activity */}
