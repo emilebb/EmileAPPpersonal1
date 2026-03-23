@@ -3,6 +3,7 @@ import { StyleSheet, View, Text, AppState, TextInput, TouchableOpacity, SafeArea
 import { supabase } from '../lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { Image } from 'expo-image';
 
 // Tells Supabase Auth to continuously refresh the session automatically if
 // the app is in the foreground.
@@ -60,7 +61,11 @@ export default function LoginScreen() {
         <View style={styles.content}>
           <View style={styles.logoContainer}>
             <View style={styles.logoCircle}>
-              <Ionicons name="cube" size={48} color="#38bdf8" />
+              <Image 
+                source={require('@/assets/images/logo.png')} 
+                style={styles.logoImage}
+                contentFit="contain"
+              />
             </View>
             <Text style={styles.logoText}>VAULT</Text>
           </View>
@@ -221,20 +226,25 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   logoCircle: {
-    width: 80,
-    height: 80,
+    width: 100,
+    height: 100,
     borderRadius: 24,
-    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderWidth: 2,
-    borderColor: 'rgba(56, 189, 248, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
-    shadowColor: '#38bdf8',
+    marginBottom: 16,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 8,
+    overflow: 'hidden',
+  },
+  logoImage: {
+    width: 80,
+    height: 80,
   },
   logoText: {
     fontSize: 32,
