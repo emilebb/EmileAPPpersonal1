@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform, SafeAreaView, KeyboardAvoidingView, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform, SafeAreaView, KeyboardAvoidingView, ScrollView, Linking } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -50,6 +50,27 @@ export default function PerfilUsuario() {
     }
   }
 
+  const handleUpgrade = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    // 1. Crea un "Payment Link" en tu dashboard de Stripe (toma 2 minutos)
+    // 2. Agrégale el ID del usuario como parámetro para saber quién pagó
+    const STRIPE_PAYMENT_LINK = `https://buy.stripe.com/test_tu_enlace_aqui?client_reference_id=${user.id}`;
+
+    try {
+      const supported = await Linking.canOpenURL(STRIPE_PAYMENT_LINK);
+      if (supported) {
+        await Linking.openURL(STRIPE_PAYMENT_LINK);
+      } else {
+        if (Platform.OS === 'web') window.alert("No se pudo abrir la pasarela de pago.");
+        else Alert.alert("Error", "No se pudo abrir la pasarela de pago.");
+      }
+    } catch (error) {
+      console.error("Error al redirigir a Stripe", error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
@@ -88,7 +109,7 @@ export default function PerfilUsuario() {
             </TouchableOpacity>
 
             {perfil.plan_suscripcion === 'free' && (
-              <TouchableOpacity style={styles.btnUpgrade} onPress={() => router.push('/modal')}>
+              <TouchableOpacity style={styles.btnUpgrade} onPress={handleUpgrade}>
                 <Text style={styles.btnTextUpgrade}>🚀 Subir a Plan PRO ($9.99)</Text>
               </TouchableOpacity>
             )}

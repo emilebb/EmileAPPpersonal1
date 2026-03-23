@@ -66,6 +66,32 @@ export default function InventoryScreen() {
       return;
     }
 
+    // Verificamos si es PRO o si aún tiene espacio
+    const { data: perfilData } = await supabase
+      .from('perfiles')
+      .select('plan_suscripcion')
+      .eq('id', session.user.id)
+      .single();
+      
+    if (perfilData?.plan_suscripcion === 'free') {
+      const { count } = await supabase
+        .from('productos')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', session.user.id);
+
+      if (count !== null && count >= 20) {
+        setLoading(false);
+        const title = "Límite alcanzado";
+        const msg = "Has llegado al límite de 20 productos. ¡Pásate a PRO para agregar ilimitados!";
+        if (Platform.OS === 'web') {
+          window.alert(`${title}\n${msg}`);
+        } else {
+          Alert.alert(title, msg, [{ text: "Entendido" }]);
+        }
+        return;
+      }
+    }
+
     const { error } = await supabase.from('productos').insert([{
       user_id: session.user.id,
       nombre,

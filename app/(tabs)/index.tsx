@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, SafeAreaView, Platform, Dimensions } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, SafeAreaView, Platform, Dimensions, Linking, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LineChart } from 'react-native-chart-kit';
 import { printToFileAsync } from 'expo-print';
@@ -42,6 +42,26 @@ export default function DashboardScreen() {
     }
   };
 
+  const handleUpgrade = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    // Stripe Payment Link
+    const STRIPE_PAYMENT_LINK = `https://buy.stripe.com/test_tu_enlace_aqui?client_reference_id=${user.id}`;
+
+    try {
+      const supported = await Linking.canOpenURL(STRIPE_PAYMENT_LINK);
+      if (supported) {
+        await Linking.openURL(STRIPE_PAYMENT_LINK);
+      } else {
+        if (Platform.OS === 'web') window.alert("No se pudo abrir la pasarela de pago.");
+        else Alert.alert("Error", "No se pudo abrir la pasarela de pago.");
+      }
+    } catch (error) {
+      console.error("Error al redirigir a Stripe", error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -51,7 +71,7 @@ export default function DashboardScreen() {
             <Text style={styles.greeting}>Buenos días,</Text>
             <Text style={styles.userName}>Creador 🚀</Text>
           </View>
-          <TouchableOpacity style={styles.proUpgradeBtn} onPress={() => router.push('/modal')}>
+          <TouchableOpacity style={styles.proUpgradeBtn} onPress={handleUpgrade}>
             <Ionicons name="star" size={16} color="#0f172a" />
             <Text style={styles.proUpgradeText}>Hazte PRO</Text>
           </TouchableOpacity>
