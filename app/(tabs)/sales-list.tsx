@@ -15,7 +15,6 @@ interface VentaLocal {
 
 export default function SalesListScreen() {
   const [ventas, setVentas] = useState<VentaLocal[]>([]);
-  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {

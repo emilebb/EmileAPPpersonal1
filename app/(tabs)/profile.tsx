@@ -2,12 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform, SafeAreaView, KeyboardAvoidingView, ScrollView, Linking } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 
 export default function PerfilUsuario() {
   const [loading, setLoading] = useState(true);
   const [perfil, setPerfil] = useState({ nombre_negocio: '', moneda: 'USD', plan_suscripcion: 'free' });
-  const router = useRouter();
 
   useEffect(() => { 
     obtenerPerfil(); 

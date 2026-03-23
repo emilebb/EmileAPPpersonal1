@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, View, Text, AppState, TextInput, TouchableOpacity, SafeAreaView } from 'react-native';
+import { StyleSheet, View, Text, AppState, TextInput, TouchableOpacity, SafeAreaView } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';

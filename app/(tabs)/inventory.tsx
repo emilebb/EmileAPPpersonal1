@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, Platform, Modal, Image, Alert, KeyboardAvoidingView, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, Platform, Modal, Alert, KeyboardAvoidingView, ScrollView, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { FlashList } from '@shopify/flash-list';
+import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../../lib/supabase';
-
-const { width } = Dimensions.get('window');
+import { finalizarVentaOffline, VentaData } from '../../lib/offline-sync';
 
 interface Product {
   id: string;
@@ -16,10 +15,21 @@ interface Product {
   imagen_uri?: string;
 }
 
+interface CartItem {
+  product: Product;
+  cantidad: number;
+}
+
 export default function InventoryScreen() {
   const [productos, setProductos] = useState<Product[]>([]);
   const [search, setSearch] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isCartVisible, setIsCartVisible] = useState(false);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [isQuantityModalVisible, setIsQuantityModalVisible] = useState(false);
+  const [selectedProductForCart, setSelectedProductForCart] = useState<Product | null>(null);
+  const [cartQuantity, setCartQuantity] = useState('1');
+  const [processingCart, setProcessingCart] = useState(false);
 
   // Form State
   const [nombre, setNombre] = useState('');
@@ -100,9 +110,92 @@ export default function InventoryScreen() {
     ? productos.filter(p => p.nombre.toLowerCase().includes(search.toLowerCase()))
     : productos;
 
+  // Cart functions
+  const cartTotal = cart.reduce((sum, item) => sum + (item.product.precio_venta * item.cantidad), 0);
+  const cartItemCount = cart.reduce((sum, item) => sum + item.cantidad, 0);
+
+  const openQuantityModal = (product: Product) => {
+    setSelectedProductForCart(product);
+    setCartQuantity('1');
+    setIsQuantityModalVisible(true);
+  };
+
+  const addToCart = () => {
+    if (!selectedProductForCart) return;
+    const qty = parseInt(cartQuantity) || 1;
+    if (qty <= 0 || qty > selectedProductForCart.stock_actual) return;
+
+    const existing = cart.find(item => item.product.id === selectedProductForCart.id);
+    if (existing) {
+      setCart(cart.map(item => 
+        item.product.id === selectedProductForCart.id 
+          ? { ...item, cantidad: item.cantidad + qty }
+          : item
+      ));
+    } else {
+      setCart([...cart, { product: selectedProductForCart, cantidad: qty }]);
+    }
+    setIsQuantityModalVisible(false);
+    setSelectedProductForCart(null);
+  };
+
+  const updateCartItemQuantity = (productId: string, newQty: number) => {
+    if (newQty <= 0) {
+      setCart(cart.filter(item => item.product.id !== productId));
+    } else {
+      setCart(cart.map(item => 
+        item.product.id === productId ? { ...item, cantidad: newQty } : item
+      ));
+    }
+  };
+
+  const removeFromCart = (productId: string) => {
+    setCart(cart.filter(item => item.product.id !== productId));
+  };
+
+  const clearCart = () => {
+    setCart([]);
+  };
+
+  const processCartSale = async () => {
+    if (cart.length === 0) return;
+    
+    setProcessingCart(true);
+
+    for (const item of cart) {
+      const datosVenta: VentaData = {
+        producto_id: item.product.id,
+        cantidad_venta: item.cantidad,
+        precio_total: item.product.precio_venta * item.cantidad,
+        timestamp: new Date().toISOString(),
+        producto_nombre: item.product.nombre
+      };
+      
+      try {
+        await finalizarVentaOffline(datosVenta);
+      } catch (error) {
+        console.error('Error procesando venta:', error);
+      }
+    }
+
+    // Update local inventory
+    setProductos(productos.map(p => {
+      const cartItem = cart.find(c => c.product.id === p.id);
+      if (cartItem) {
+        return { ...p, stock_actual: Math.max(0, p.stock_actual - cartItem.cantidad) };
+      }
+      return p;
+    }));
+
+    setProcessingCart(false);
+    setCart([]);
+    setIsCartVisible(false);
+  };
+
   const renderItem = ({ item }: { item: Product }) => {
     const isLowStock = item.stock_actual <= 5;
     const isNoStock = item.stock_actual <= 0;
+    const inCart = cart.find(c => c.product.id === item.id);
 
     return (
       <View style={styles.cardContainer}>
@@ -127,8 +220,21 @@ export default function InventoryScreen() {
             
             <View style={styles.cardFooter}>
               <Text style={styles.productPrice}>${Number(item.precio_venta).toFixed(2)}</Text>
-              <TouchableOpacity style={styles.cartIconBox}>
-                <Ionicons name="cart-outline" size={20} color="#f8fafc" />
+              <TouchableOpacity 
+                style={[styles.cartIconBox, inCart && styles.cartIconBoxActive]}
+                onPress={() => !isNoStock && openQuantityModal(item)}
+                disabled={isNoStock}
+              >
+                {inCart ? (
+                  <View>
+                    <Ionicons name="cart" size={20} color="#0f172a" />
+                    <View style={styles.cartBadge}>
+                      <Text style={styles.cartBadgeText}>{inCart.cantidad}</Text>
+                    </View>
+                  </View>
+                ) : (
+                  <Ionicons name={isNoStock ? "close-circle" : "cart-outline"} size={20} color={isNoStock ? "#ef4444" : "#f8fafc"} />
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -144,6 +250,14 @@ export default function InventoryScreen() {
         <View style={styles.titleRow}>
           <Text style={styles.titleVault}>Vault</Text>
           <Text style={styles.titleInventory}>Inventory</Text>
+          <TouchableOpacity style={styles.cartButton} onPress={() => setIsCartVisible(true)}>
+            <Ionicons name="cart" size={28} color="#f8fafc" />
+            {cartItemCount > 0 && (
+              <View style={styles.cartCount}>
+                <Text style={styles.cartCountText}>{cartItemCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
         <Text style={styles.subtitle}>Monitor and manage your high-frequency assets with real-time tracking.</Text>
 
@@ -170,6 +284,148 @@ export default function InventoryScreen() {
       <TouchableOpacity style={styles.fab} onPress={() => setIsModalVisible(true)}>
         <Ionicons name="add" size={32} color="#0f172a" />
       </TouchableOpacity>
+
+      {/* Cart Modal */}
+      <Modal visible={isCartVisible} animationType="slide" transparent={true}>
+        <View style={styles.cartOverlay}>
+          <View style={styles.cartContainer}>
+            <View style={styles.cartHeader}>
+              <View style={styles.cartTitleRow}>
+                <Ionicons name="cart" size={24} color="#f8fafc" />
+                <Text style={styles.cartTitle}>Shopping Cart</Text>
+                <Text style={styles.cartItemCount}>{cartItemCount} items</Text>
+              </View>
+              <TouchableOpacity onPress={() => setIsCartVisible(false)}>
+                <Ionicons name="close" size={28} color="#94a3b8" />
+              </TouchableOpacity>
+            </View>
+
+            {cart.length === 0 ? (
+              <View style={styles.emptyCart}>
+                <Ionicons name="cart-outline" size={64} color="#334155" />
+                <Text style={styles.emptyCartText}>Your cart is empty</Text>
+                <Text style={styles.emptyCartSubtext}>Add products from inventory</Text>
+              </View>
+            ) : (
+              <>
+                <ScrollView style={styles.cartList}>
+                  {cart.map((item) => (
+                    <View key={item.product.id} style={styles.cartItem}>
+                      <View style={styles.cartItemInfo}>
+                        <Text style={styles.cartItemName}>{item.product.nombre}</Text>
+                        <Text style={styles.cartItemPrice}>${item.product.precio_venta.toFixed(2)} / unit</Text>
+                      </View>
+                      <View style={styles.cartItemControls}>
+                        <TouchableOpacity 
+                          style={styles.qtyBtn}
+                          onPress={() => updateCartItemQuantity(item.product.id, item.cantidad - 1)}
+                        >
+                          <Ionicons name="remove" size={18} color="#f8fafc" />
+                        </TouchableOpacity>
+                        <Text style={styles.qtyText}>{item.cantidad}</Text>
+                        <TouchableOpacity 
+                          style={styles.qtyBtn}
+                          onPress={() => updateCartItemQuantity(item.product.id, item.cantidad + 1)}
+                        >
+                          <Ionicons name="add" size={18} color="#f8fafc" />
+                        </TouchableOpacity>
+                      </View>
+                      <Text style={styles.cartItemTotal}>
+                        ${(item.product.precio_venta * item.cantidad).toFixed(2)}
+                      </Text>
+                      <TouchableOpacity 
+                        style={styles.removeBtn}
+                        onPress={() => removeFromCart(item.product.id)}
+                      >
+                        <Ionicons name="trash-outline" size={20} color="#ef4444" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </ScrollView>
+
+                <View style={styles.cartFooter}>
+                  <View style={styles.totalRow}>
+                    <Text style={styles.totalLabel}>Total</Text>
+                    <Text style={styles.totalAmount}>${cartTotal.toFixed(2)}</Text>
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.checkoutBtn}
+                    onPress={processCartSale}
+                    disabled={processingCart}
+                  >
+                    <Ionicons name="card" size={24} color="#0f172a" style={{ marginRight: 10 }} />
+                    <Text style={styles.checkoutBtnText}>
+                      {processingCart ? 'Processing...' : 'Checkout'}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.clearCartBtn} onPress={clearCart}>
+                    <Text style={styles.clearCartBtnText}>Clear Cart</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Quantity Modal */}
+      <Modal visible={isQuantityModalVisible} animationType="fade" transparent={true}>
+        <View style={styles.qtyModalOverlay}>
+          <View style={styles.qtyModalContainer}>
+            <Text style={styles.qtyModalTitle}>ADD TO CART</Text>
+            <Text style={styles.qtyModalProduct}>{selectedProductForCart?.nombre}</Text>
+            <Text style={styles.qtyModalStock}>Stock: {selectedProductForCart?.stock_actual}</Text>
+            
+            <View style={styles.qtyInputRow}>
+              <TouchableOpacity 
+                style={styles.qtyInputBtn}
+                onPress={() => setCartQuantity(prev => {
+                  const num = parseInt(prev) || 1;
+                  return num > 1 ? String(num - 1) : '1';
+                })}
+              >
+                <Ionicons name="remove" size={28} color="#f8fafc" />
+              </TouchableOpacity>
+              <TextInput
+                style={styles.qtyInput}
+                value={cartQuantity}
+                onChangeText={setCartQuantity}
+                keyboardType="numeric"
+                textAlign="center"
+              />
+              <TouchableOpacity 
+                style={styles.qtyInputBtn}
+                onPress={() => setCartQuantity(prev => {
+                  const num = parseInt(prev) || 0;
+                  return String(Math.min(num + 1, selectedProductForCart?.stock_actual || 1));
+                })}
+              >
+                <Ionicons name="add" size={28} color="#f8fafc" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.qtyModalTotal}>
+              Subtotal: ${((parseInt(cartQuantity) || 0) * (selectedProductForCart?.precio_venta || 0)).toFixed(2)}
+            </Text>
+
+            <View style={styles.qtyModalActions}>
+              <TouchableOpacity 
+                style={styles.qtyCancelBtn}
+                onPress={() => setIsQuantityModalVisible(false)}
+              >
+                <Text style={styles.qtyCancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.qtyConfirmBtn}
+                onPress={addToCart}
+              >
+                <Ionicons name="cart" size={20} color="#0f172a" style={{ marginRight: 8 }} />
+                <Text style={styles.qtyConfirmBtnText}>Add</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Add Product Modal */}
       <Modal visible={isModalVisible} animationType="fade" transparent={true}>
@@ -219,9 +475,6 @@ export default function InventoryScreen() {
     </SafeAreaView>
   );
 }
-
-// FlatList instead of FlashList for simpler testing in this context if needed, but keeping logic
-import { FlatList } from 'react-native';
 
 const styles = StyleSheet.create({
   container: {
@@ -479,6 +732,304 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '900',
     letterSpacing: 1,
+  },
+  // Cart styles
+  cartButton: {
+    position: 'absolute',
+    right: 0,
+    top: 5,
+    padding: 8,
+  },
+  cartCount: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#4ade80',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cartCountText: {
+    color: '#0f172a',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  cartIconBoxActive: {
+    backgroundColor: '#4ade80',
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: '#38bdf8',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cartBadgeText: {
+    color: '#0f172a',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  cartOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'flex-end',
+  },
+  cartContainer: {
+    backgroundColor: '#0d1017',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    maxHeight: '85%',
+    borderWidth: 1,
+    borderColor: '#2d333d',
+  },
+  cartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1d24',
+  },
+  cartTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  cartTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#f8fafc',
+  },
+  cartItemCount: {
+    color: '#64748b',
+    fontSize: 14,
+  },
+  emptyCart: {
+    alignItems: 'center',
+    paddingVertical: 80,
+  },
+  emptyCartText: {
+    color: '#64748b',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 16,
+  },
+  emptyCartSubtext: {
+    color: '#475569',
+    fontSize: 14,
+    marginTop: 8,
+  },
+  cartList: {
+    maxHeight: 400,
+    padding: 16,
+  },
+  cartItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1a1d24',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#2d333d',
+  },
+  cartItemInfo: {
+    flex: 1,
+  },
+  cartItemName: {
+    color: '#f8fafc',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  cartItemPrice: {
+    color: '#64748b',
+    fontSize: 12,
+  },
+  cartItemControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  qtyBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#2d333d',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  qtyText: {
+    color: '#f8fafc',
+    fontSize: 18,
+    fontWeight: 'bold',
+    minWidth: 30,
+    textAlign: 'center',
+  },
+  cartItemTotal: {
+    color: '#4ade80',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 12,
+    minWidth: 70,
+    textAlign: 'right',
+  },
+  removeBtn: {
+    padding: 8,
+    marginLeft: 8,
+  },
+  cartFooter: {
+    padding: 24,
+    borderTopWidth: 1,
+    borderTopColor: '#1a1d24',
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  totalLabel: {
+    color: '#94a3b8',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  totalAmount: {
+    color: '#4ade80',
+    fontSize: 28,
+    fontWeight: '900',
+  },
+  checkoutBtn: {
+    backgroundColor: '#4ade80',
+    borderRadius: 20,
+    padding: 18,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkoutBtnText: {
+    color: '#0f172a',
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  clearCartBtn: {
+    marginTop: 12,
+    padding: 12,
+    alignItems: 'center',
+  },
+  clearCartBtnText: {
+    color: '#ef4444',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  // Quantity Modal styles
+  qtyModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  qtyModalContainer: {
+    backgroundColor: '#0d1017',
+    borderRadius: 32,
+    padding: 32,
+    width: '100%',
+    maxWidth: 360,
+    borderWidth: 1,
+    borderColor: '#2d333d',
+    alignItems: 'center',
+  },
+  qtyModalTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#38bdf8',
+    letterSpacing: 2,
+    marginBottom: 16,
+  },
+  qtyModalProduct: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#f8fafc',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  qtyModalStock: {
+    color: '#64748b',
+    fontSize: 14,
+    marginBottom: 24,
+  },
+  qtyInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 20,
+  },
+  qtyInputBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: '#1a1d24',
+    borderWidth: 1,
+    borderColor: '#2d333d',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  qtyInput: {
+    backgroundColor: '#1a1d24',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#38bdf8',
+    width: 100,
+    height: 60,
+    color: '#f8fafc',
+    fontSize: 28,
+    fontWeight: 'bold',
+  },
+  qtyModalTotal: {
+    color: '#4ade80',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 24,
+  },
+  qtyModalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  qtyCancelBtn: {
+    flex: 1,
+    backgroundColor: '#1a1d24',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#2d333d',
+  },
+  qtyCancelBtnText: {
+    color: '#94a3b8',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  qtyConfirmBtn: {
+    flex: 1,
+    backgroundColor: '#4ade80',
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  qtyConfirmBtnText: {
+    color: '#0f172a',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
