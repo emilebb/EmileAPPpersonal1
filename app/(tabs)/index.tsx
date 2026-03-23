@@ -6,10 +6,12 @@ import { printToFileAsync } from 'expo-print';
 import { shareAsync } from 'expo-sharing';
 import { useRouter } from 'expo-router';
 
-const { width } = Dimensions.get('window');
+// removed global width definition
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const screenWidth = Dimensions.get('window').width;
+  const chartWidth = Math.max(screenWidth - 40, 300); // Evita error 418 y SVG width negativo en Web SSR
 
   const handleExport = async () => {
     try {
@@ -69,7 +71,7 @@ export default function DashboardScreen() {
               labels: ["8am", "10am", "12pm", "2pm", "4pm", "6pm"],
               datasets: [{ data: [20, 45, 28, 80, 110, 43] }]
             }}
-            width={width - 40}
+            width={chartWidth}
             height={220}
             yAxisLabel="$"
             yAxisSuffix=""
@@ -238,7 +240,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   actionCard: {
-    width: (width - 60) / 4,
+    width: (Dimensions.get('window').width - 60) / 4,
     alignItems: 'center',
     marginBottom: 15,
   },
