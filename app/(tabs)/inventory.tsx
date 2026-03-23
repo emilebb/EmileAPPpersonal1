@@ -76,8 +76,10 @@ export default function InventoryScreen() {
     }]);
 
     if (error) {
-      if (Platform.OS === 'web') window.alert("Error: " + error.message + "\n\n¿Añadiste las columnas 'categoria' e 'imagen_uri' en Supabase?");
-      else Alert.alert("Error", error.message);
+      console.error("SUPABASE ERROR DETAILS:", JSON.stringify(error, null, 2));
+      const errMsg = `Error de Base de Datos:\n${error.message}\n\nDetalles: ${error.details || 'Ninguno'}\nPista: ${error.hint || 'Conflicto de tabla (409) o regla RLS.'}`;
+      if (Platform.OS === 'web') window.alert(errMsg);
+      else Alert.alert("Error", errMsg);
     } else {
       if (Platform.OS === 'web') window.alert("¡Producto guardado!");
       else Alert.alert("¡Éxito!", "Producto guardado con éxito.");

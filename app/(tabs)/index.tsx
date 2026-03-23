@@ -13,6 +13,9 @@ export default function DashboardScreen() {
   const screenWidth = Dimensions.get('window').width;
   const chartWidth = Math.max(screenWidth - 40, 300); // Evita error 418 y SVG width negativo en Web SSR
 
+  const [isMounted, setIsMounted] = React.useState(false);
+  React.useEffect(() => { setIsMounted(true); }, []);
+
   const handleExport = async () => {
     try {
       const html = `
@@ -66,32 +69,32 @@ export default function DashboardScreen() {
         {/* Sales Chart Section */}
         <View style={styles.chartSection}>
           <Text style={styles.sectionTitle}>Ingresos de Hoy</Text>
-          <LineChart
-            data={{
-              labels: ["8am", "10am", "12pm", "2pm", "4pm", "6pm"],
-              datasets: [{ data: [20, 45, 28, 80, 110, 43] }]
-            }}
-            width={chartWidth}
-            height={220}
-            yAxisLabel="$"
-            yAxisSuffix=""
-            chartConfig={{
-              backgroundColor: "#1e293b",
-              backgroundGradientFrom: "#1e293b",
-              backgroundGradientTo: "#1e293b",
-              decimalPlaces: 0,
-              color: (opacity = 1) => `rgba(56, 189, 248, ${opacity})`,
-              labelColor: (opacity = 1) => `rgba(148, 163, 184, ${opacity})`,
-              style: { borderRadius: 16 },
-              propsForDots: {
-                r: "5",
-                strokeWidth: "2",
-                stroke: "#0f172a"
-              }
-            }}
-            bezier
-            style={styles.chart}
-          />
+          {isMounted ? (
+            <LineChart
+              data={{
+                labels: ["8am", "10am", "12pm", "2pm", "4pm", "6pm"],
+                datasets: [{ data: [20, 45, 28, 80, 110, 43] }]
+              }}
+              width={chartWidth}
+              height={220}
+              yAxisLabel="$"
+              yAxisSuffix=""
+              chartConfig={{
+                backgroundColor: "#1e293b",
+                backgroundGradientFrom: "#1e293b",
+                backgroundGradientTo: "#1e293b",
+                decimalPlaces: 0,
+                color: (opacity = 1) => `rgba(56, 189, 248, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(148, 163, 184, ${opacity})`,
+                style: { borderRadius: 16 },
+                propsForDots: { r: "5", strokeWidth: "2", stroke: "#0f172a" }
+              }}
+              bezier
+              style={styles.chart}
+            />
+          ) : (
+            <View style={[styles.chart, { width: chartWidth, height: 220, backgroundColor: '#1e293b' }]} />
+          )}
         </View>
 
         {/* Quick Actions Grid */}
