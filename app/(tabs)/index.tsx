@@ -35,24 +35,39 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.backgroundOrb} />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.push('/profile')}>
+          <TouchableOpacity 
+            style={styles.avatarButton}
+            onPress={() => router.push('/profile')}
+            activeOpacity={0.7}
+          >
             <View style={styles.avatarWrapper}>
-              <Ionicons name="person-circle" size={40} color="#38bdf8" />
+              <Ionicons name="person-circle" size={44} color="#38bdf8" />
             </View>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Money Maker</Text>
-          <TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>Dashboard</Text>
+            <Text style={styles.headerSubtitle}>Welcome back</Text>
+          </View>
+          <TouchableOpacity style={styles.notificationBtn} activeOpacity={0.7}>
             <Ionicons name="notifications-outline" size={24} color="#f8fafc" />
+            <View style={styles.notificationBadge} />
           </TouchableOpacity>
         </View>
 
-        {/* Global Balance */}
-        <View style={styles.balanceSection}>
-          <Text style={styles.balanceLabel}>TOTAL VAULT BALANCE</Text>
+        {/* Balance Card */}
+        <View style={styles.balanceCard}>
+          <View style={styles.balanceHeader}>
+            <View style={styles.balanceIconBox}>
+              <Ionicons name="wallet" size={20} color="#38bdf8" />
+            </View>
+            <Text style={styles.balanceLabel}>TOTAL VAULT BALANCE</Text>
+          </View>
+          
           <View style={styles.balanceRow}>
             <Text style={styles.currencySymbol}>$</Text>
             <Text style={styles.balanceAmount}>124,592</Text>
@@ -61,11 +76,14 @@ export default function DashboardScreen() {
           
           <View style={styles.badgeRow}>
             <View style={styles.trendingBadge}>
-              <Ionicons name="trending-up" size={14} color="#38bdf8" />
+              <Ionicons name="trending-up" size={14} color="#4ade80" />
               <Text style={styles.trendingText}>+12.4%</Text>
             </View>
-            <TouchableOpacity style={styles.filterChip}>
+            <TouchableOpacity style={styles.filterChip} activeOpacity={0.7}>
               <Text style={styles.filterText}>WEEKLY</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.filterChip} activeOpacity={0.7}>
+              <Text style={styles.filterText}>USD</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -74,10 +92,10 @@ export default function DashboardScreen() {
         <View style={styles.chartCard}>
           <View style={styles.chartHeader}>
             <View>
-              <Text style={styles.chartTitle}>Weekly Revenue</Text>
-              <Text style={styles.chartSubtitle}>Performance Metrics</Text>
+              <Text style={styles.chartTitle}>Revenue Overview</Text>
+              <Text style={styles.chartSubtitle}>Your performance this week</Text>
             </View>
-            <View style={{ alignItems: 'flex-end' }}>
+            <View style={styles.chartStats}>
               <Text style={styles.chartStatAmount}>$12,402</Text>
               <Text style={styles.chartStatLabel}>NET PROFIT</Text>
             </View>
@@ -89,14 +107,14 @@ export default function DashboardScreen() {
                 labels: ["MON", "WED", "FRI", "SUN"],
                 datasets: [{ data: [30, 45, 35, 75, 40, 85] }]
               }}
-              width={width - 40}
+              width={width - 72}
               height={180}
               chartConfig={{
-                backgroundColor: "#1a1d24",
-                backgroundGradientFrom: "#1a1d24",
-                backgroundGradientTo: "#1a1d24",
+                backgroundColor: "transparent",
+                backgroundGradientFrom: "transparent",
+                backgroundGradientTo: "transparent",
                 decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(50, 210, 255, ${opacity})`,
+                color: (opacity = 1) => `rgba(56, 189, 248, ${opacity})`,
                 labelColor: (opacity = 1) => `rgba(148, 163, 184, ${opacity})`,
                 style: { borderRadius: 16 },
                 propsForDots: { r: "0" },
@@ -108,15 +126,40 @@ export default function DashboardScreen() {
               style={styles.chart}
             />
           ) : (
-            <View style={{ height: 180, backgroundColor: '#1a1d24' }} />
+            <View style={styles.chartPlaceholder} />
           )}
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.quickActions}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.actionsRow}>
+            <TouchableOpacity style={styles.actionCard} activeOpacity={0.7}>
+              <View style={[styles.actionIconBox, { backgroundColor: 'rgba(56, 189, 248, 0.1)' }]}>
+                <Ionicons name="add-circle" size={28} color="#38bdf8" />
+              </View>
+              <Text style={styles.actionLabel}>New Sale</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionCard} activeOpacity={0.7}>
+              <View style={[styles.actionIconBox, { backgroundColor: 'rgba(74, 222, 128, 0.1)' }]}>
+                <Ionicons name="cube" size={28} color="#4ade80" />
+              </View>
+              <Text style={styles.actionLabel}>Inventory</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionCard} activeOpacity={0.7}>
+              <View style={[styles.actionIconBox, { backgroundColor: 'rgba(251, 191, 36, 0.1)' }]}>
+                <Ionicons name="barcode" size={28} color="#fbbf24" />
+              </View>
+              <Text style={styles.actionLabel}>Scanner</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Recent Activity */}
         <View style={styles.activitySection}>
           <View style={styles.activityHeader}>
             <Text style={styles.sectionTitle}>Recent Activity</Text>
-            <TouchableOpacity onPress={handleUpgrade}>
+            <TouchableOpacity onPress={handleUpgrade} activeOpacity={0.7}>
               <Text style={styles.seeAllText}>SEE ALL</Text>
             </TouchableOpacity>
           </View>
@@ -127,7 +170,8 @@ export default function DashboardScreen() {
             subtitle="Today, 2:45 PM" 
             amount="+$2,450.00" 
             status="COMPLETED" 
-            statusColor="#38bdf8"
+            statusColor="#4ade80"
+            iconBg="rgba(74, 222, 128, 0.1)"
           />
           <ActivityItem 
             icon="wallet" 
@@ -136,6 +180,7 @@ export default function DashboardScreen() {
             amount="-$1,200.00" 
             status="PROCESSING" 
             statusColor="#a29bfe"
+            iconBg="rgba(162, 155, 254, 0.1)"
           />
           <ActivityItem 
             icon="star" 
@@ -143,14 +188,9 @@ export default function DashboardScreen() {
             subtitle="24 Oct, 2023" 
             amount="+$842.10" 
             status="COMPLETED" 
-            statusColor="#38bdf8"
+            statusColor="#4ade80"
+            iconBg="rgba(74, 222, 128, 0.1)"
           />
-        </View>
-
-        {/* Action Tiles */}
-        <View style={styles.tilesRow}>
-          <ActionTile icon="send" label="Transfer" sublabel="Move funds instantly" />
-          <ActionTile icon="card" label="Top Up" sublabel="Add liquidity to vault" />
         </View>
 
       </ScrollView>
@@ -158,68 +198,134 @@ export default function DashboardScreen() {
   );
 }
 
-const ActivityItem = ({ icon, title, subtitle, amount, status, statusColor }: any) => (
+const ActivityItem = ({ icon, title, subtitle, amount, status, statusColor, iconBg }: any) => (
   <View style={styles.activityCard}>
-    <View style={styles.activityIconBox}>
-      <Ionicons name={icon} size={22} color="#38bdf8" />
+    <View style={[styles.activityIconBox, { backgroundColor: iconBg }]}>
+      <Ionicons name={icon} size={22} color={statusColor} />
     </View>
     <View style={styles.activityMain}>
       <Text style={styles.activityTitle}>{title}</Text>
       <Text style={styles.activitySubtitle}>{subtitle}</Text>
     </View>
-    <View style={{ alignItems: 'flex-end' }}>
-      <Text style={[styles.activityAmount, { color: amount.startsWith('+') ? '#38bdf8' : '#f8fafc' }]}>{amount}</Text>
-      <Text style={[styles.activityStatus, { color: statusColor }]}>{status}</Text>
+    <View style={styles.activityRight}>
+      <Text style={[styles.activityAmount, { color: amount.startsWith('+') ? '#4ade80' : '#f8fafc' }]}>{amount}</Text>
+      <View style={[styles.statusBadge, { backgroundColor: `${statusColor}15` }]}>
+        <Text style={[styles.activityStatus, { color: statusColor }]}>{status}</Text>
+      </View>
     </View>
   </View>
-);
-
-const ActionTile = ({ icon, label, sublabel }: any) => (
-  <TouchableOpacity style={styles.actionTile}>
-    <Ionicons name={icon} size={24} color="#38bdf8" style={{ marginBottom: 12 }} />
-    <Text style={styles.tileLabel}>{label}</Text>
-    <Text style={styles.tileSublabel}>{sublabel}</Text>
-  </TouchableOpacity>
 );
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0d1017',
+    backgroundColor: '#09090b',
+  },
+  backgroundOrb: {
+    position: 'absolute',
+    top: -100,
+    right: -100,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: 'rgba(56, 189, 248, 0.06)',
+    blurRadius: 80,
   },
   scrollContent: {
-    padding: 20,
-    paddingTop: Platform.OS === 'android' ? 40 : 10,
-    paddingBottom: 40,
+    padding: 24,
+    paddingTop: Platform.OS === 'android' ? 20 : 10,
+    paddingBottom: 100,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 32,
+  },
+  avatarButton: {
+    padding: 4,
   },
   avatarWrapper: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.2)',
     justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#38bdf8',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+  headerCenter: {
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#38bdf8',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#f8fafc',
+    letterSpacing: -0.5,
   },
-  balanceSection: {
+  headerSubtitle: {
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 2,
+  },
+  notificationBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 40,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ef4444',
+    borderWidth: 2,
+    borderColor: '#09090b',
+  },
+  balanceCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: 28,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  balanceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  balanceIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
   },
   balanceLabel: {
     color: '#64748b',
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: 11,
+    fontWeight: '700',
     letterSpacing: 1.5,
-    marginBottom: 10,
   },
   balanceRow: {
     flexDirection: 'row',
@@ -227,168 +333,220 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   currencySymbol: {
-    fontSize: 24,
-    color: '#1e3a4f',
-    fontWeight: 'bold',
-    marginTop: 10,
-    marginRight: 4,
+    fontSize: 28,
+    color: '#38bdf8',
+    fontWeight: '700',
+    marginTop: 8,
+    marginRight: 2,
   },
   balanceAmount: {
-    fontSize: 64,
+    fontSize: 56,
     fontWeight: '900',
-    color: '#1e3a8a', // Darker blue base
-    textShadowColor: 'rgba(56, 189, 248, 0.4)',
+    color: '#f8fafc',
+    letterSpacing: -2,
+    textShadowColor: 'rgba(56, 189, 248, 0.3)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 20,
   },
   balanceDecimal: {
-    fontSize: 32,
-    color: '#1e3a4f',
-    fontWeight: 'bold',
-    marginTop: 12,
+    fontSize: 28,
+    color: '#475569',
+    fontWeight: '700',
+    marginTop: 8,
   },
   badgeRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   trendingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(30, 41, 59, 0.5)',
+    backgroundColor: 'rgba(74, 222, 128, 0.1)',
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: 'rgba(74, 222, 128, 0.2)',
   },
   trendingText: {
-    color: '#38bdf8',
-    fontWeight: 'bold',
+    color: '#4ade80',
+    fontWeight: '700',
     marginLeft: 6,
-    fontSize: 14,
+    fontSize: 13,
   },
   filterChip: {
-    backgroundColor: '#1e293b',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
   },
   filterText: {
     color: '#94a3b8',
-    fontWeight: 'bold',
-    fontSize: 14,
+    fontWeight: '600',
+    fontSize: 12,
   },
   chartCard: {
-    backgroundColor: '#1a1d24',
-    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: 28,
     padding: 24,
-    marginBottom: 40,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 10,
   },
   chartHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   chartTitle: {
     color: '#f8fafc',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
   chartSubtitle: {
     color: '#64748b',
-    fontSize: 12,
+    fontSize: 13,
+    marginTop: 4,
+  },
+  chartStats: {
+    alignItems: 'flex-end',
   },
   chartStatAmount: {
-    color: '#38bdf8',
-    fontSize: 18,
-    fontWeight: 'bold',
+    color: '#4ade80',
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   chartStatLabel: {
     color: '#64748b',
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    marginTop: 2,
   },
   chart: {
-    marginLeft: -20,
+    marginLeft: -8,
+  },
+  chartPlaceholder: {
+    height: 180,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+  },
+  quickActions: {
+    marginBottom: 28,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#f8fafc',
+    marginBottom: 16,
+    letterSpacing: -0.3,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionCard: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: 20,
+    padding: 18,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+  },
+  actionIconBox: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  actionLabel: {
+    color: '#f8fafc',
+    fontSize: 12,
+    fontWeight: '600',
   },
   activitySection: {
-    marginBottom: 40,
+    marginBottom: 20,
   },
   activityHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#f8fafc',
+    marginBottom: 16,
   },
   seeAllText: {
     color: '#38bdf8',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   activityCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a1d24',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
     padding: 16,
-    borderRadius: 24,
+    borderRadius: 20,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
   },
   activityIconBox: {
     width: 48,
     height: 48,
-    borderRadius: 12,
-    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 14,
   },
   activityMain: {
     flex: 1,
   },
   activityTitle: {
     color: '#f8fafc',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '600',
     marginBottom: 4,
   },
   activitySubtitle: {
     color: '#64748b',
     fontSize: 12,
   },
+  activityRight: {
+    alignItems: 'flex-end',
+  },
   activityAmount: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  statusBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 8,
   },
   activityStatus: {
     fontSize: 10,
-    fontWeight: '900',
+    fontWeight: '800',
     letterSpacing: 0.5,
-  },
-  tilesRow: {
-    flexDirection: 'row',
-    gap: 15,
-  },
-  actionTile: {
-    flex: 1,
-    backgroundColor: '#1a1d24',
-    padding: 24,
-    borderRadius: 30,
-  },
-  tileLabel: {
-    color: '#f8fafc',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  tileSublabel: {
-    color: '#64748b',
-    fontSize: 11,
   },
 });
 
