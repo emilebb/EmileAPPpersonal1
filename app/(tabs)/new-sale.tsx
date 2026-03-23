@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Platform, TextInput, Modal, Alert, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import React, { useEffect, useState } from 'react';
+import { Alert, Modal, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../../lib/supabase';
 
 interface Product {
@@ -56,18 +56,17 @@ export default function NewSaleScreen() {
     }
 
     setLoading(true);
-    const { error } = await supabase.rpc('registrar_venta', {
-      producto_id: selectedProduct.id,
-      cantidad_venta: cantidad,
-      precio_total: precioTotal
-    });
+    
+    try {
+      const datosVenta: VentaData = {
+        producto_id: selectedProduct.id,
+        cantidad_venta: cantidad,
+        precio_total: precioTotal,
+        timestamp: new Date().toISOString(),
+        producto_nombre: selectedProduct.nombre
+      };
 
-    if (error) {
-      if (Platform.OS === 'web') window.alert("Error: " + error.message);
-      else Alert.alert("Error", error.message);
-    } else {
-      if (Platform.OS === 'web') window.alert("¡Éxito! Venta registrada y stock actualizado.");
-      else Alert.alert("¡Éxito!", "Venta registrada y stock actualizado.");
+      await finalizarVentaOffline(datosVenta);
       
       // Update local state for immediate feedback
       setProductos(productos.map(p => 
@@ -75,7 +74,16 @@ export default function NewSaleScreen() {
       ));
       setSelectedProduct(null);
       setCantidadStr('');
+      
+    } catch (error) {
+      console.error('Error en venta:', error);
+      if (Platform.OS === 'web') {
+        window.alert("Error: " + (error as Error).message);
+      } else {
+        Alert.alert("Error", (error as Error).message);
+      }
     }
+    
     setLoading(false);
   };
 

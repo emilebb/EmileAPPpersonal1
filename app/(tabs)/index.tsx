@@ -1,54 +1,25 @@
 import React from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, SafeAreaView, Platform, Dimensions, Linking, Alert } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, SafeAreaView, Platform, Dimensions, Linking, Alert, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LineChart } from 'react-native-chart-kit';
-import { printToFileAsync } from 'expo-print';
-import { shareAsync } from 'expo-sharing';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 
-// removed global width definition
+const { width } = Dimensions.get('window');
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const screenWidth = Dimensions.get('window').width;
-  const chartWidth = Math.max(screenWidth - 40, 300); // Evita error 418 y SVG width negativo en Web SSR
-
   const [isMounted, setIsMounted] = React.useState(false);
-  React.useEffect(() => { setIsMounted(true); }, []);
 
-  const handleExport = async () => {
-    try {
-      const html = `
-        <html>
-          <body style="font-family: Arial; padding: 20px;">
-            <h1>Reporte de Ventas - Money Maker</h1>
-            <p><strong>Balance Total:</strong> $45,231.89</p>
-            <p><strong>Crecimiento:</strong> +12.5% vs último mes</p>
-            <hr />
-            <h2>Actividad Reciente</h2>
-            <ul>
-              <li>Suscripción Premium: +$99.00</li>
-              <li>Venta de Curso: +$149.00</li>
-              <li>Donación: +$25.00</li>
-            </ul>
-          </body>
-        </html>
-      `;
-      const { uri } = await printToFileAsync({ html });
-      await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
-    } catch (error) {
-      alert("Error exportando: " + error);
-    }
-  };
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleUpgrade = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     
-    // Stripe Payment Link
     const STRIPE_PAYMENT_LINK = `https://buy.stripe.com/test_tu_enlace_aqui?client_reference_id=${user.id}`;
-
     try {
       const supported = await Linking.canOpenURL(STRIPE_PAYMENT_LINK);
       if (supported) {
@@ -65,276 +36,359 @@ export default function DashboardScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Header Section */}
+        
+        {/* Header */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Buenos días,</Text>
-            <Text style={styles.userName}>Creador 🚀</Text>
-          </View>
-          <TouchableOpacity style={styles.proUpgradeBtn} onPress={handleUpgrade}>
-            <Ionicons name="star" size={16} color="#0f172a" />
-            <Text style={styles.proUpgradeText}>Hazte PRO</Text>
+          <TouchableOpacity onPress={() => router.push('/profile')}>
+            <View style={styles.avatarWrapper}>
+              <Ionicons name="person-circle" size={40} color="#38bdf8" />
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Money Maker</Text>
+          <TouchableOpacity>
+            <Ionicons name="notifications-outline" size={24} color="#f8fafc" />
           </TouchableOpacity>
         </View>
 
-        {/* Balance Card */}
-        <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>Balance Total</Text>
-          <Text style={styles.balanceAmount}>$45,231.89</Text>
-          <View style={styles.profitBadge}>
-            <Ionicons name="trending-up" size={16} color="#4ade80" />
-            <Text style={styles.profitText}>+12.5% vs último mes</Text>
+        {/* Global Balance */}
+        <View style={styles.balanceSection}>
+          <Text style={styles.balanceLabel}>TOTAL VAULT BALANCE</Text>
+          <View style={styles.balanceRow}>
+            <Text style={styles.currencySymbol}>$</Text>
+            <Text style={styles.balanceAmount}>124,592</Text>
+            <Text style={styles.balanceDecimal}>.80</Text>
+          </View>
+          
+          <View style={styles.badgeRow}>
+            <View style={styles.trendingBadge}>
+              <Ionicons name="trending-up" size={14} color="#38bdf8" />
+              <Text style={styles.trendingText}>+12.4%</Text>
+            </View>
+            <TouchableOpacity style={styles.filterChip}>
+              <Text style={styles.filterText}>WEEKLY</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Sales Chart Section */}
-        <View style={styles.chartSection}>
-          <Text style={styles.sectionTitle}>Ingresos de Hoy</Text>
+        {/* Revenue Chart Card */}
+        <View style={styles.chartCard}>
+          <View style={styles.chartHeader}>
+            <View>
+              <Text style={styles.chartTitle}>Weekly Revenue</Text>
+              <Text style={styles.chartSubtitle}>Performance Metrics</Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={styles.chartStatAmount}>$12,402</Text>
+              <Text style={styles.chartStatLabel}>NET PROFIT</Text>
+            </View>
+          </View>
+
           {isMounted ? (
             <LineChart
               data={{
-                labels: ["8am", "10am", "12pm", "2pm", "4pm", "6pm"],
-                datasets: [{ data: [20, 45, 28, 80, 110, 43] }]
+                labels: ["MON", "WED", "FRI", "SUN"],
+                datasets: [{ data: [30, 45, 35, 75, 40, 85] }]
               }}
-              width={chartWidth}
-              height={220}
-              yAxisLabel="$"
-              yAxisSuffix=""
+              width={width - 40}
+              height={180}
               chartConfig={{
-                backgroundColor: "#1e293b",
-                backgroundGradientFrom: "#1e293b",
-                backgroundGradientTo: "#1e293b",
+                backgroundColor: "#1a1d24",
+                backgroundGradientFrom: "#1a1d24",
+                backgroundGradientTo: "#1a1d24",
                 decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(56, 189, 248, ${opacity})`,
+                color: (opacity = 1) => `rgba(50, 210, 255, ${opacity})`,
                 labelColor: (opacity = 1) => `rgba(148, 163, 184, ${opacity})`,
                 style: { borderRadius: 16 },
-                propsForDots: { r: "5", strokeWidth: "2", stroke: "#0f172a" }
+                propsForDots: { r: "0" },
+                propsForBackgroundLines: { stroke: "#2d323d", strokeDasharray: "" }
               }}
               bezier
+              withVerticalLines={false}
+              withHorizontalLines={false}
               style={styles.chart}
             />
           ) : (
-            <View style={[styles.chart, { width: chartWidth, height: 220, backgroundColor: '#1e293b' }]} />
+            <View style={{ height: 180, backgroundColor: '#1a1d24' }} />
           )}
-        </View>
-
-        {/* Quick Actions Grid */}
-        <View style={styles.actionsGrid}>
-          <ActionCard icon="wallet-outline" label="Retirar" color="#f472b6" />
-          <ActionCard icon="cube-outline" label="Inventario" color="#facc15" onPress={() => router.push('/inventory')} />
-          <ActionCard icon="document-text-outline" label="Exportar" color="#a78bfa" onPress={handleExport} />
-          <ActionCard icon="log-out-outline" label="Salir" color="#ef4444" onPress={async () => await supabase.auth.signOut()} />
         </View>
 
         {/* Recent Activity */}
         <View style={styles.activitySection}>
           <View style={styles.activityHeader}>
-            <Text style={styles.sectionTitle}>Actividad Reciente</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAllText}>Ver Todo</Text>
+            <Text style={styles.sectionTitle}>Recent Activity</Text>
+            <TouchableOpacity onPress={handleUpgrade}>
+              <Text style={styles.seeAllText}>SEE ALL</Text>
             </TouchableOpacity>
           </View>
 
-          <ActivityItem icon="logo-usd" title="Suscripción Premium" amount="+$99.00" time="Hace 2 min" />
-          <ActivityItem icon="cart" title="Venta de Curso" amount="+$149.00" time="Hace 1 hora" />
-          <ActivityItem icon="gift" title="Donación" amount="+$25.00" time="Hace 3 horas" />
-          <ActivityItem icon="logo-usd" title="Suscripción Pro" amount="+$49.00" time="Ayer" />
+          <ActivityItem 
+            icon="bag-handle" 
+            title="Product Sales" 
+            subtitle="Today, 2:45 PM" 
+            amount="+$2,450.00" 
+            status="COMPLETED" 
+            statusColor="#38bdf8"
+          />
+          <ActivityItem 
+            icon="wallet" 
+            title="Vault Payout" 
+            subtitle="Yesterday, 10:12 AM" 
+            amount="-$1,200.00" 
+            status="PROCESSING" 
+            statusColor="#a29bfe"
+          />
+          <ActivityItem 
+            icon="star" 
+            title="Partner Commission" 
+            subtitle="24 Oct, 2023" 
+            amount="+$842.10" 
+            status="COMPLETED" 
+            statusColor="#38bdf8"
+          />
         </View>
+
+        {/* Action Tiles */}
+        <View style={styles.tilesRow}>
+          <ActionTile icon="send" label="Transfer" sublabel="Move funds instantly" />
+          <ActionTile icon="card" label="Top Up" sublabel="Add liquidity to vault" />
+        </View>
+
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const ActionCard = ({ icon, label, color, onPress }: { icon: any; label: string; color: string; onPress?: () => void }) => (
-  <TouchableOpacity style={styles.actionCard} onPress={onPress}>
-    <View style={[styles.actionIconBg, { backgroundColor: color + '20' }]}>
-      <Ionicons name={icon} size={28} color={color} />
+const ActivityItem = ({ icon, title, subtitle, amount, status, statusColor }: any) => (
+  <View style={styles.activityCard}>
+    <View style={styles.activityIconBox}>
+      <Ionicons name={icon} size={22} color="#38bdf8" />
     </View>
-    <Text style={styles.actionLabel}>{label}</Text>
-  </TouchableOpacity>
+    <View style={styles.activityMain}>
+      <Text style={styles.activityTitle}>{title}</Text>
+      <Text style={styles.activitySubtitle}>{subtitle}</Text>
+    </View>
+    <View style={{ alignItems: 'flex-end' }}>
+      <Text style={[styles.activityAmount, { color: amount.startsWith('+') ? '#38bdf8' : '#f8fafc' }]}>{amount}</Text>
+      <Text style={[styles.activityStatus, { color: statusColor }]}>{status}</Text>
+    </View>
+  </View>
 );
 
-const ActivityItem = ({ icon, title, amount, time }: { icon: any; title: string; amount: string; time: string }) => (
-  <View style={styles.activityItem}>
-    <View style={styles.activityIconWrapper}>
-      <Ionicons name={icon} size={20} color="#94a3b8" />
-    </View>
-    <View style={styles.activityDetails}>
-      <Text style={styles.activityTitle}>{title}</Text>
-      <Text style={styles.activityTime}>{time}</Text>
-    </View>
-    <Text style={styles.activityAmount}>{amount}</Text>
-  </View>
+const ActionTile = ({ icon, label, sublabel }: any) => (
+  <TouchableOpacity style={styles.actionTile}>
+    <Ionicons name={icon} size={24} color="#38bdf8" style={{ marginBottom: 12 }} />
+    <Text style={styles.tileLabel}>{label}</Text>
+    <Text style={styles.tileSublabel}>{sublabel}</Text>
+  </TouchableOpacity>
 );
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a', // slate-900
+    backgroundColor: '#0d1017',
   },
   scrollContent: {
     padding: 20,
-    paddingTop: Platform.OS === 'android' ? 40 : 20,
-    paddingBottom: 100,
+    paddingTop: Platform.OS === 'android' ? 40 : 10,
+    paddingBottom: 40,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 40,
   },
-  greeting: {
-    fontSize: 16,
-    color: '#94a3b8', // slate-400
-    marginBottom: 4,
+  avatarWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  userName: {
-    fontSize: 28,
+  headerTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#f8fafc', // slate-50
+    color: '#38bdf8',
   },
-  proUpgradeBtn: {
-    backgroundColor: '#fbbf24', // amber-400
+  balanceSection: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  balanceLabel: {
+    color: '#64748b',
+    fontSize: 12,
+    fontWeight: 'bold',
+    letterSpacing: 1.5,
+    marginBottom: 10,
+  },
+  balanceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+  },
+  currencySymbol: {
+    fontSize: 24,
+    color: '#1e3a4f',
+    fontWeight: 'bold',
+    marginTop: 10,
+    marginRight: 4,
+  },
+  balanceAmount: {
+    fontSize: 64,
+    fontWeight: '900',
+    color: '#1e3a8a', // Darker blue base
+    textShadowColor: 'rgba(56, 189, 248, 0.4)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 20,
+  },
+  balanceDecimal: {
+    fontSize: 32,
+    color: '#1e3a4f',
+    fontWeight: 'bold',
+    marginTop: 12,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  trendingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(30, 41, 59, 0.5)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#1e293b',
+  },
+  trendingText: {
+    color: '#38bdf8',
+    fontWeight: 'bold',
+    marginLeft: 6,
+    fontSize: 14,
+  },
+  filterChip: {
+    backgroundColor: '#1e293b',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
   },
-  proUpgradeText: {
-    color: '#0f172a',
-    fontWeight: 'bold',
-    marginLeft: 6,
-    fontSize: 14,
-  },
-  balanceCard: {
-    backgroundColor: '#1e293b', // slate-800
-    borderRadius: 24,
-    padding: 24,
-    marginBottom: 30,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-    borderWidth: 1,
-    borderColor: '#334155', // slate-700
-  },
-  balanceLabel: {
-    fontSize: 14,
+  filterText: {
     color: '#94a3b8',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  balanceAmount: {
-    fontSize: 42,
-    fontWeight: '900',
-    color: '#f8fafc',
-    marginBottom: 16,
-  },
-  profitBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#22c55e20', // transparent green
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
-  },
-  profitText: {
-    color: '#4ade80', // green-400
-    fontWeight: '600',
-    marginLeft: 6,
+    fontWeight: 'bold',
     fontSize: 14,
   },
-  chartSection: {
-    marginBottom: 30,
+  chartCard: {
+    backgroundColor: '#1a1d24',
+    borderRadius: 30,
+    padding: 24,
+    marginBottom: 40,
   },
-  chart: {
-    marginTop: 15,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  actionsGrid: {
+  chartHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    marginBottom: 30,
+    marginBottom: 20,
   },
-  actionCard: {
-    width: (Dimensions.get('window').width - 60) / 4,
-    alignItems: 'center',
-    marginBottom: 15,
+  chartTitle: {
+    color: '#f8fafc',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
-  actionIconBg: {
-    width: 60,
-    height: 60,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  actionLabel: {
-    color: '#e2e8f0', // slate-200
+  chartSubtitle: {
+    color: '#64748b',
     fontSize: 12,
-    fontWeight: '500',
+  },
+  chartStatAmount: {
+    color: '#38bdf8',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  chartStatLabel: {
+    color: '#64748b',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  chart: {
+    marginLeft: -20,
   },
   activitySection: {
-    marginTop: 10,
+    marginBottom: 40,
   },
   activityHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#f8fafc',
   },
   seeAllText: {
-    color: '#38bdf8', // sky-400
-    fontWeight: '600',
-    fontSize: 14,
+    color: '#38bdf8',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
-  activityItem: {
+  activityCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: '#1a1d24',
     padding: 16,
-    borderRadius: 16,
+    borderRadius: 24,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#334155',
   },
-  activityIconWrapper: {
+  activityIconBox: {
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#0f172a',
+    backgroundColor: 'rgba(56, 189, 248, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
   },
-  activityDetails: {
+  activityMain: {
     flex: 1,
   },
   activityTitle: {
     color: '#f8fafc',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     marginBottom: 4,
   },
-  activityTime: {
-    color: '#64748b', // slate-500
-    fontSize: 13,
+  activitySubtitle: {
+    color: '#64748b',
+    fontSize: 12,
   },
   activityAmount: {
-    color: '#4ade80',
     fontSize: 16,
     fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  activityStatus: {
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  tilesRow: {
+    flexDirection: 'row',
+    gap: 15,
+  },
+  actionTile: {
+    flex: 1,
+    backgroundColor: '#1a1d24',
+    padding: 24,
+    borderRadius: 30,
+  },
+  tileLabel: {
+    color: '#f8fafc',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  tileSublabel: {
+    color: '#64748b',
+    fontSize: 11,
   },
 });
+
